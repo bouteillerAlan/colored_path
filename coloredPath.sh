@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
-declare -a hues=(
+# Check for color support
+# -t 1 checks if stdout is a terminal
+# The ! -z "$FORCE_COLOR" part checks if the FORCE_COLOR variable is set
+if [ -t 1 ] || [ ! -z "$FORCE_COLOR" ]; then
+  COLOR_SUPPORT=true
+else
+  COLOR_SUPPORT=false
+fi
+
+hues=(
   "255 100 0" # orange
   "0 200 255" # blue
   "200 0 255" # purple
@@ -9,7 +18,7 @@ declare -a hues=(
   "255 255 0" # yellow
 )
 
-declare -a colors=(
+colors=(
   $'\e[38;5;226m' $'\e[38;5;220m'
   $'\e[38;5;214m' $'\e[38;5;208m'
   $'\e[38;5;202m' $'\e[38;5;166m'
@@ -35,41 +44,23 @@ getDegOfColors() {
 colorMyPath() {
   reset=$'\e[0m'
   colored=""
-
-  # Check for color support
-  # -t 1 checks if stdout is a terminal
-  # The ! -z "$FORCE_COLOR" part checks if the FORCE_COLOR variable is set
-  if [ -t 1 ] || [ ! -z "$FORCE_COLOR" ]; then
-    COLOR_SUPPORT=true
-  else
-    COLOR_SUPPORT=false
-  fi
-
   IFS=":" read -ra paths <<< "$PATH"
 
   for path_idx in "${!paths[@]}"; do
 
-    if [ "$COLOR_SUPPORT" = true ]; then
-      hue_idx=$(( path_idx % ${#hues[@]} ))
-      read -r hr hg hb <<< "${hues[$hue_idx]}"
-      getDegOfColors 255 200 0 "$hr" "$hg" "$hb" 10
-    fi
-
-    IFS="/" read -ra parts <<< "${paths[$path_idx]}"
     color_idx=0
+    IFS="/" read -ra parts <<< "${paths[$path_idx]}"
 
     for part_idx in "${!parts[@]}"; do
-
-      # todo: refactor this part
-      # skip empty line
+      # skip empty part
       if [ -z "${parts[$part_idx]}" ]; then
         continue;
       fi
 
       if [ "$color_idx" -eq "${#colors[@]}" ]; then
-        color_idx=$(( color_idx + 1 ))
+        color_idx=0
       else
-        color_idx=$(( (color_idx + 1) % ${#colors[@]} ))
+        color_idx=$(( color_idx + 1 ))
       fi
 
       colored="${colored}/${colors[$color_idx]}${parts[$part_idx]}$reset"
@@ -84,5 +75,4 @@ colorMyPath() {
 
   echo "$colored"
 }
-
 colorMyPath
