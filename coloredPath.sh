@@ -89,11 +89,13 @@ colorMyPath() {
         continue;
       fi
 
-      # interpolate color
-      r=$(( $r1 + ($r2 - $r1) * $color_idx / (${#parts[@]} - 1) ))
-      g=$(( $g1 + ($g2 - $g1) * $color_idx / (${#parts[@]} - 1) ))
-      b=$(( $b1 + ($b2 - $b1) * $color_idx / (${#parts[@]} - 1) ))
-      colors+=($'\e[38;2;'"${r};${g};${b}"'m')
+      if [ "$COLOR_SUPPORT" = true ]; then
+        # interpolate color
+        r=$(( $r1 + ($r2 - $r1) * $color_idx / (${#parts[@]} - 1) ))
+        g=$(( $g1 + ($g2 - $g1) * $color_idx / (${#parts[@]} - 1) ))
+        b=$(( $b1 + ($b2 - $b1) * $color_idx / (${#parts[@]} - 1) ))
+        colors+=($'\e[38;2;'"${r};${g};${b}"'m')
+      fi
 
       if [ "$color_idx" -eq $(( ${#colors[@]} - 1 )) ]; then
         color_idx=0
