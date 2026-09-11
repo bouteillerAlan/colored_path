@@ -11,14 +11,13 @@ fi
 
 colorMyPath() {
   hues=(
-    "255 100 000" # orange
-    "000 200 255" # blue
-    "200 000 255" # purple
-    "000 255 100" # green
-    "255 000 100" # pink
-    "255 255 000" # yellow
+    "255 100 000 255 180 000" # orange → light orange
+    "000 200 255 120 230 255" # blue → light blue
+    "200 000 255 230 120 255" # purple → light purple
+    "000 255 100 120 255 170" # green → light green
+    "255 000 100 255 120 180" # pink → light pink
+    "255 255 000 255 255 150" # yellow → light yellow
   )
-
   colors=(
     $'\e[38;5;226m' $'\e[38;5;220m'
     $'\e[38;5;214m' $'\e[38;5;208m'
@@ -42,10 +41,17 @@ colorMyPath() {
     IFS="/" read -ra parts <<< "${paths[$path_idx]}"
 
     if [ "$COLOR_SUPPORT" = true ]; then
-      selectedHue=${hues[$hue_idx]} # xxx xxx xxx
+      selectedHue=${hues[$hue_idx]}
+
       r1=${selectedHue:0:3}
-      g1=${selectedHue:4:3}
-      b1=${selectedHue:8:3}
+      r2=${selectedHue:4:3}
+
+      g1=${selectedHue:8:3}
+      g2=${selectedHue:12:3}
+
+      b1=${selectedHue:16:3}
+      b2=${selectedHue:20:3}
+
       if [[ "$r1" == "000" ]]; then
         r1=0
       fi
@@ -55,9 +61,15 @@ colorMyPath() {
       if [[ "$b1" == "000" ]]; then
         b1=0
       fi
-      r2=$(( 255 - r1 ))
-      g2=$(( 255 - g1 ))
-      b2=$(( 255 - b1 ))
+      if [[ "$r2" == "000" ]]; then
+        r2=0
+      fi
+      if [[ "$g2" == "000" ]]; then
+        g2=0
+      fi
+      if [[ "$b2" == "000" ]]; then
+        b2=0
+      fi
 
       if [ "$hue_idx" -eq $(( ${#hues[@]} - 1 )) ]; then
         hue_idx=0
