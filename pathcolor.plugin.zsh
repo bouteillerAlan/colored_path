@@ -3,13 +3,12 @@
 # Check for color support
 # -t 1 checks if stdout is a terminal
 # The ! -z "$FORCE_COLOR" part checks if the FORCE_COLOR variable is set
+COLOR_SUPPORT=false
 if [ -t 1 ] || [ ! -z "$FORCE_COLOR" ]; then
   COLOR_SUPPORT=true
-else
-  COLOR_SUPPORT=false
 fi
 
-colorMyPath() {
+pathcolor() {
   hues=(
     "255 000 000 255 120 120" # red → light red
     "000 150 150 120 220 220" # teal → light teal
@@ -42,14 +41,13 @@ colorMyPath() {
   reset=$'\e[0m'
 
   if [ "$COLOR_SUPPORT" = true ]; then
-      colors=()
+    colors=()
   fi
 
   IFS=":" read -ra paths <<< "$PATH"
+  color_idx=0
 
   for path_idx in "${!paths[@]}"; do
-    color_idx=0
-    hasEmpty=false
     IFS="/" read -ra parts <<< "${paths[$path_idx]}"
 
     if [ "$COLOR_SUPPORT" = true ]; then
@@ -87,45 +85,54 @@ colorMyPath() {
       else
         hue_idx=$(( hue_idx + 1 ))
       fi
-    fi
-
-    for part_idx in "${!parts[@]}"; do
-      # skip empty part
-      if [ -z "${parts[$part_idx]}" ]; then
-        hasEmpty=true
-        continue;
-      fi
-
-      l=${#parts[@]}
-      if [ "$hasEmpty" = true ]; then
-        l=$(( l - 1 ))
-      fi
-
-      if [ "$COLOR_SUPPORT" = true ]; then
-        # interpolate color
-        r=$(( 10#$r1 + (10#$r2 - 10#$r1) * $color_idx / ($l - 1) ))
-        g=$(( 10#$g1 + (10#$g2 - 10#$g1) * $color_idx / ($l - 1) ))
-        b=$(( 10#$b1 + (10#$b2 - 10#$b1) * $color_idx / ($l - 1) ))
-        colors+=($'\e[38;2;'"${r};${g};${b}"'m')
-      fi
-
-      colored="${colored}/${colors[$color_idx]}${parts[$part_idx]}$reset"
-
+    else
+      colored="${colored}${colors[$color_idx]}${paths[$path_idx]}$reset"
       if [ "$color_idx" -eq $(( ${#colors[@]} - 1 )) ]; then
         color_idx=0
       else
         color_idx=$(( color_idx + 1 ))
       fi
-    done
+    fi
 
+    if [ "$COLOR_SUPPORT" = true ]; then
+      for part_idx in "${!parts[@]}"; do
+        # skip empty part
+        if [ -z "${parts[$part_idx]}" ]; then
+          hasEmpty=true
+          continue;
+        fi
+
+        l=${#parts[@]}
+          if [ "$hasEmpty" = true ]; then
+            l=$(( l - 1 ))
+          fi
+
+          if [ "$COLOR_SUPPORT" = true ]; then
+            # interpolate color
+            r=$(( 10#$r1 + (10#$r2 - 10#$r1) * $color_idx / ($l - 1) ))
+            g=$(( 10#$g1 + (10#$g2 - 10#$g1) * $color_idx / ($l - 1) ))
+            b=$(( 10#$b1 + (10#$b2 - 10#$b1) * $color_idx / ($l - 1) ))
+            colors+=($'\e[38;2;'"${r};${g};${b}"'m')
+          fi
+
+          colored="${colored}${colors[$color_idx]}/${parts[$part_idx]}$reset"
+
+          if [ "$color_idx" -eq $(( ${#colors[@]} - 1 )) ]; then
+            color_idx=0
+          else
+            color_idx=$(( color_idx + 1 ))
+          fi
+        done
+
+        hasEmpty= false
+        colors=()
+        color_idx=0
+    fi
     if [ "$path_idx" -ne $(( ${#paths[@]} - 1 )) ]; then
       colored="${colored}:"
     fi
 
-    hasEmpty= false
-    colors=()
   done
-
   echo "$colored"
 }
-colorMyPath
+pathcolor
